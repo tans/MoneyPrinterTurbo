@@ -1,11 +1,31 @@
 """Serial scheduling with process isolation, durable progress and bounded shutdown."""
 
 import copy
+import errno
 import multiprocessing
 import threading
 
 from app.desktop.store import ACTIVE
 from app.desktop.worker import worker_main
+
+
+PIPE_CLOSED = object()
+
+
+def read_event(connection, timeout):
+    """A Windows named pipe can report ERROR_BROKEN_PIPE while polling EOF."""
+    try:
+        return connection.recv() if connection.poll(timeout) else None
+    except EOFError:
+        return PIPE_CLOSED
+    except OSError as exc:
+        if exc.errno == errno.EPIPE or getattr(exc, "winerror", None) in {
+            109,
+            232,
+            233,
+        }:
+            return PIPE_CLOSED
+        raise
 
 
 def terminate_process_tree(process):
@@ -172,17 +192,19 @@ class JobManager:
                     continue
             try:
                 while process.is_alive():
-                    if events.poll(0.2):
-                        try:
-                            self._apply_event(job["id"], events.recv())
-                        except EOFError:
-                            break
-                process.join(timeout=1)
-                while events.poll():
-                    try:
-                        self._apply_event(job["id"], events.recv())
-                    except EOFError:
+                    event = read_event(events, 0.2)
+                    if event is PIPE_CLOSED:
                         break
+                    if event is not None:
+                        self._apply_event(job["id"], event)
+                process.join(timeout=2)
+                while True:
+                    event = read_event(events, 0)
+                    if event is PIPE_CLOSED or event is None:
+                        break
+                    self._apply_event(job["id"], event)
+                if process.is_alive():
+                    terminate_process_tree(process)
                 with self.condition:
                     task = self.store.get(job["id"])
                     if task and task["status"] in ACTIVE:
@@ -192,7 +214,9 @@ class JobManager:
                             error=f"生成进程意外结束（退出码 {process.exitcode}）",
                         )
             except Exception as exc:
-                self.store.update(job["id"], "failed", error=f"任务监控失败：{exc}")
+                record = self.store.get(job["id"])
+                if record and record["status"] in ACTIVE:
+                    self.store.update(job["id"], "failed", error=f"任务监控失败：{exc}")
                 terminate_process_tree(process)
             finally:
                 events.close()

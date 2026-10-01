@@ -53,6 +53,7 @@ def workspace(tmp_path, monkeypatch):
     previous = {name: copy.deepcopy(dict(getattr(config, name))) for name in SECTIONS}
     monkeypatch.setenv("MPT_DATA_DIR", str(tmp_path))
     monkeypatch.setattr(config, "config_file", str(tmp_path / "config.toml"))
+    monkeypatch.setattr(config, "root_dir", str(tmp_path))
     monkeypatch.setattr(server, "JobManager", HeldJobs)
     app = create_app(tmp_path, "test-session-token")
     client = TestClient(app)
@@ -226,6 +227,22 @@ def test_cancel_running_and_queued_jobs_and_shutdown_are_bounded(tmp_path):
     finally:
         manager.shutdown()
         store.close()
+
+
+@pytest.mark.parametrize("operation", ["poll", "recv"])
+def test_windows_pipe_disconnect_is_eof_but_unrelated_io_errors_are_reported(operation):
+    from unittest.mock import MagicMock
+    from app.desktop.jobs import PIPE_CLOSED, read_event
+
+    connection = MagicMock()
+    connection.poll.return_value = True
+    disconnected = OSError("The pipe has been ended")
+    disconnected.winerror = 109
+    getattr(connection, operation).side_effect = disconnected
+    assert read_event(connection, 0) is PIPE_CLOSED
+    getattr(connection, operation).side_effect = PermissionError("access denied")
+    with pytest.raises(PermissionError):
+        read_event(connection, 0)
 
 
 def test_session_authentication_and_origin_guard(workspace):
