@@ -45,3 +45,7 @@ htmlcov/
 
 # Claude Code 订阅令牌（docker compose 自动读取），禁止提交
 .env
+
+# Desktop packaging outputs (the checked-in CSS runs without Node.js).
+/build/
+/dist/

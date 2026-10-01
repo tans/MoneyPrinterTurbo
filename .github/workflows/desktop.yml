@@ -1,0 +1,70 @@
+name: Desktop packages
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/desktop/**"
+      - "app/runtime_paths.py"
+      - "desktop.py"
+      - "desktop/**"
+      - "package*.json"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/desktop.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Desktop / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Build offline DaisyUI assets
+        run: |
+          npm ci
+          npm run check:desktop
+          npm run build:desktop
+          git diff --exit-code -- desktop/ui/app.css
+      - name: Install desktop and build dependencies
+        if: runner.os != 'Linux'
+        run: uv sync --frozen --extra desktop --group desktop-build
+      - name: Install Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libasound2t64 libxkbcommon0 libegl1 libopengl0 libxtst6 libxkbfile1 libxcb-cursor0
+          uv sync --frozen --extra desktop --extra desktop-linux --group desktop-build
+      - name: Verify desktop services
+        run: uv run --no-sync python -m pytest -q test/services/test_desktop.py
+      - name: Stage licensed font
+        run: uv run --no-sync python desktop/prepare_resources.py
+      - name: Build package
+        run: uv run --no-sync pyinstaller --noconfirm desktop/desktop.spec
+      - name: Smoke test packaged application
+        if: runner.os != 'Windows'
+        run: uv run --no-sync python desktop/smoke.py dist/MoneyPrinterTurbo/MoneyPrinterTurbo
+      - name: Smoke test packaged Windows application
+        if: runner.os == 'Windows'
+        run: uv run --no-sync python desktop/smoke.py dist/MoneyPrinterTurbo/MoneyPrinterTurbo.exe
+      - name: Upload desktop package
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoneyPrinterTurbo-${{ runner.os }}-${{ runner.arch }}
+          path: dist/
+          retention-days: 14

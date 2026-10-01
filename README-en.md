@@ -20,6 +20,17 @@ English | [简体中文](README.md) | [日本語](README-ja.md) | [Releases](htt
 
 ## Screenshots 🖥️
 
+### DaisyUI Desktop Workspace
+
+```bash
+uv sync --frozen --extra desktop
+uv run --no-sync python desktop.py
+```
+
+The pywebview desktop window includes creation, imported assets, durable task history and settings. Linux requires a GUI backend; see the [desktop setup and packaging guide](docs/DESKTOP.md).
+
+![DaisyUI Desktop Workspace](docs/desktop.png)
+
 <h4 align="center">WebUI</h4>
 
 ![](docs/webui-en.jpg)
