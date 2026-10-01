@@ -48,14 +48,14 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --python ${{ matrix.python-version }}
+        run: uv sync --frozen --extra desktop --python ${{ matrix.python-version }}
 
       - name: Compile Python sources
-        run: uv run --no-sync python -m compileall app cli.py main.py webui test docs/skill
+        run: uv run --no-sync python -m compileall app cli.py desktop.py main.py webui test docs/skill
 
       - name: Lint Python sources
         if: matrix.python-version == '3.11'
-        run: uv run --no-sync ruff check app cli.py main.py webui test docs/skill
+        run: uv run --no-sync ruff check app cli.py desktop.py main.py webui test docs/skill
 
       - name: Run unit tests with coverage
         # pytest 兼容现有 unittest.TestCase，同时会收集仓库中的 pytest 风格
@@ -95,7 +95,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --python 3.11
+        run: uv sync --frozen --extra desktop --python 3.11
 
       - name: Compile Python sources
         run: uv run --no-sync python -m compileall app cli.py main.py webui test docs/skill
@@ -104,6 +104,7 @@ jobs:
         run: >-
           uv run --no-sync python -X utf8 -m pytest -q
           test/services/test_config.py
+          test/services/test_desktop.py
           test/services/test_state.py
           test/services/test_task.py
           test/services/test_task_manager.py

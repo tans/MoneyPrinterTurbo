@@ -20,6 +20,17 @@
 
 ## 界面预览 🖥️
 
+### DaisyUI 桌面工作台
+
+```bash
+uv sync --frozen --extra desktop
+uv run --no-sync python desktop.py
+```
+
+pywebview 原生窗口，包含创作、素材库、任务历史和设置。Linux 需额外安装图形后端，安装、迁移与打包步骤见 [桌面版说明](docs/DESKTOP.md)。
+
+![DaisyUI 桌面工作台](docs/desktop.png)
+
 <h4 align="center">WebUI</h4>
 
 ![](docs/webui.jpg)

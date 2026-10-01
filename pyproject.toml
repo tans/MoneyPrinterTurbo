@@ -43,8 +43,19 @@ dependencies = [
 twelvelabs = [
     "twelvelabs>=1.2.8",
 ]
+desktop = [
+    "filelock>=3.20,<4",
+    "psutil>=7,<8",
+    "pywebview>=6.0,<7",
+]
+desktop-linux = [
+    "pywebview[pyside6]>=6.0,<7",
+]
 
 [dependency-groups]
+desktop-build = [
+    "pyinstaller>=6.19,<7",
+]
 dev = [
     "coverage==7.15.1",
     "pytest==9.1.1",

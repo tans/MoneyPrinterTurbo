@@ -1,0 +1,27 @@
+{
+  "name": "moneyprinterturbo-desktop-ui",
+  "private": true,
+  "version": "1.3.7",
+  "description": "Offline DaisyUI assets for the pywebview desktop workspace",
+  "scripts": {
+    "build:desktop": "tailwindcss -i desktop/ui/input.css -o desktop/ui/app.css --minify",
+    "check:desktop": "node --check desktop/ui/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tans/MoneyPrinterTurbo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tans/MoneyPrinterTurbo/issues"
+  },
+  "homepage": "https://github.com/tans/MoneyPrinterTurbo#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "daisyui": "5.7.47",
+    "tailwindcss": "4.3.3"
+  }
+}

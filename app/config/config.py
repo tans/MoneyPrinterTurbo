@@ -11,8 +11,9 @@ import toml
 from loguru import logger
 
 from app import __version__
+from app.runtime_paths import application_dir, data_dir
 
-root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+root_dir = str(data_dir())
 config_file = f"{root_dir}/config.toml"
 _CONTAINER_CGROUP_MARKERS = ("docker", "containerd", "kubepods", "libpod", "podman")
 _DOCKER_HOST_GATEWAY_NAME = "host.docker.internal"
@@ -524,7 +525,8 @@ def load_config():
                 ) from exc
 
     if not os.path.isfile(config_file):
-        example_file = f"{root_dir}/config.example.toml"
+        example_file = (str(application_dir() / "config.example.toml")
+                        if os.environ.get("MPT_DATA_DIR") else f"{root_dir}/config.example.toml")
         if os.path.isfile(example_file):
             if _initialize_config_from_example(example_file):
                 logger.info("copy config.example.toml to config.toml")

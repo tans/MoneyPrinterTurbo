@@ -33,7 +33,7 @@ def _ensure_model_loaded() -> bool:
     with _model_init_lock:
         if model is not None:
             return True
-        model_path = f"{utils.root_dir()}/models/whisper-{model_size}"
+        model_path = f"{utils.model_dir()}/whisper-{model_size}"
         model_bin_file = f"{model_path}/model.bin"
         if not os.path.isdir(model_path) or not os.path.isfile(model_bin_file):
             model_path = model_size
